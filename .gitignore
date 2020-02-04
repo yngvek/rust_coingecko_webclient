@@ -1,0 +1,6 @@
+/target
+**/*.rs.bk
+coin.csv
+coinprice.txt
+coinpricecurr.txt
+portfolio.csv

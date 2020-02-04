@@ -1,0 +1,11 @@
+[package]
+name = "webclient"
+version = "0.1.0"
+authors = ["yngvek <yngve@klakegg.org>"]
+edition = "2018"
+
+[dependencies]
+reqwest = "0.9.18"
+serde = { version = "1.0.92", features = ["derive"] }
+serde_json = "1.0.39"
+csv = "1"
