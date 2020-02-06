@@ -11,12 +11,11 @@ use std::io::BufWriter;
 use std::io::Write;
 use webclient::base_url;
 
-
 fn main() -> Result<(), Box<dyn Error>> {
     let port = read_portfolio_from_file().unwrap();
     //println!("{:#?}", port?);
 
-   let coin = get_simple_price_coin().unwrap();
+    let coin = get_simple_price_coin().unwrap();
     //println!("{:#?}", coin);
 
     let mut list_of_portfolio_coin: Vec<PortfolioCoin> = Vec::new();
@@ -32,16 +31,19 @@ fn main() -> Result<(), Box<dyn Error>> {
                     btc_value_total: c.btc_value * p.amount,
                     usd_value_total: (c.usd_value * p.amount) as i32,
                     nok_value_total: (c.nok_value * p.amount) as i32,
-                    location: p.location.to_string()
+                    location: p.location.to_string(),
                 });
             }
         }
     }
 
-   println!("{:#?}", list_of_portfolio_coin);
+    println!("{:#?}", list_of_portfolio_coin);
 
-   let sum: i32 = list_of_portfolio_coin.iter().map(|c|c.nok_value_total as i32).sum();
-   println!("Sum i NOK er {}", sum);
+    let sum: i32 = list_of_portfolio_coin
+        .iter()
+        .map(|c| c.nok_value_total as i32)
+        .sum();
+    println!("Sum i NOK er {}", sum);
 
     Ok(())
 }
@@ -56,15 +58,18 @@ struct PortfolioCoin {
     btc_value_total: f64,
     usd_value_total: i32,
     nok_value_total: i32,
-    location: String
+    location: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 struct Coin {
     name: String,
     btc_value: f64,
+    btc_24h_change: f64,
     usd_value: f64,
+    usd_24h_change: f64,
     nok_value: f64,
+    nok_24h_change: f64,
     updated: i32,
 }
 // impl PartialEq for Coin {
@@ -73,7 +78,6 @@ struct Coin {
 //     }
 // }
 
-
 #[derive(Serialize, Deserialize, Debug)]
 struct SimplePriceResponse(HashMap<String, HashMap<String, f64>>);
 
@@ -81,7 +85,7 @@ struct SimplePriceResponse(HashMap<String, HashMap<String, f64>>);
 struct Portfolio {
     name: String,
     amount: f64,
-    location: String
+    location: String,
 }
 
 fn read_portfolio_from_file() -> Result<Vec<Portfolio>, Box<dyn Error>> {
@@ -123,7 +127,8 @@ fn get_simple_price_coin() -> Result<Vec<Coin>, Box<dyn Error>> {
 
     let base_url = base_url();
     let api_endpoint_simple_price: &str = "/simple/price?ids=";
-    let api_endpoint_ending: &str = "&vs_currencies=usd,btc,nok&include_last_updated_at=true";
+    let api_endpoint_ending: &str =
+        "&vs_currencies=usd,btc,nok&include_24hr_change=true&include_last_updated_at=true";
 
     let file = File::open("coin.csv")?;
     let file_contents = BufReader::new(file);
@@ -148,7 +153,6 @@ fn get_simple_price_coin() -> Result<Vec<Coin>, Box<dyn Error>> {
     //println!("Headers:\n{:#?}", resp.headers());
     //println!("{:#?}", price);
 
-
     let savefile = OpenOptions::new()
         .append(true)
         .create(true)
@@ -161,40 +165,58 @@ fn get_simple_price_coin() -> Result<Vec<Coin>, Box<dyn Error>> {
         .open("coinpricecurr.txt")?;
     let mut savefile_cur_buf = BufWriter::new(savefile_curr);
 
-
     let mut list_of_coins: Vec<Coin> = Vec::new();
-      for line in lines.iter() {
-        println!("{};{};{};{};{}", line, price.0[line]["btc"], price.0[line]["usd"],price.0[line]["nok"], price.0[line]["last_updated_at"]);
-        writeln!(
-            savefile_buf,
-            "{};{};{};{};{}",
+    for line in lines.iter() {
+        println!(
+            "{};{};{};{};{};{};{};{}",
             line,
             price.0[line]["btc"],
+            price.0[line]["btc_24h_change"],
             price.0[line]["usd"],
+            price.0[line]["usd_24h_change"],
             price.0[line]["nok"],
+            price.0[line]["nok_24h_change"],
+            price.0[line]["last_updated_at"]
+        );
+        writeln!(
+            savefile_buf,
+            "{};{};{};{};{};{};{};{}",
+            line,
+            price.0[line]["btc"],
+            price.0[line]["btc_24h_change"],
+            price.0[line]["usd"],
+            price.0[line]["usd_24h_change"],
+            price.0[line]["nok"],
+            price.0[line]["nok_24h_change"],
             price.0[line]["last_updated_at"]
         )?;
         writeln!(
             savefile_cur_buf,
-            "{};{};{};{};{}",
+            "{};{};{};{};{};{};{};{}",
             line,
             price.0[line]["btc"],
+            price.0[line]["btc_24h_change"],
             price.0[line]["usd"],
+            price.0[line]["usd_24h_change"],
             price.0[line]["nok"],
+            price.0[line]["nok_24h_change"],
             price.0[line]["last_updated_at"]
         )?;
 
         let coin = Coin {
             name: line.to_string(),
             btc_value: price.0[line]["btc"],
+            btc_24h_change: price.0[line]["btc_24h_change"],
             usd_value: price.0[line]["usd"],
+            usd_24h_change: price.0[line]["usd_24h_change"],
             nok_value: price.0[line]["nok"],
-            updated: price.0[line]["last_updated_at"] as i32
+            nok_24h_change: price.0[line]["nok_24h_change"],
+            updated: price.0[line]["last_updated_at"] as i32,
         };
 
         list_of_coins.push(coin);
         //println!("{:#?}", coin);
-}  
+    }
 
     Ok(list_of_coins)
 }
