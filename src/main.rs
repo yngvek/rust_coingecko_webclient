@@ -28,10 +28,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                 list_of_portfolio_coin.push(PortfolioCoin {
                     name: p.name.to_string(),
                     btc_value: c.btc_value,
+                    eth_value: c.eth_value,
                     usd_value: c.usd_value,
                     nok_value: c.nok_value,
                     amount: p.amount,
                     btc_value_total: c.btc_value * p.amount,
+                    eth_value_total: c.eth_value * p.amount,
                     usd_value_total: (c.usd_value * p.amount) as i32,
                     nok_value_total: (c.nok_value * p.amount) as i32,
                     location: p.location.to_string(),
@@ -55,10 +57,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 struct PortfolioCoin {
     name: String,
     btc_value: f64,
+    eth_value: f64,
     usd_value: f64,
     nok_value: f64,
     amount: f64,
     btc_value_total: f64,
+    eth_value_total: f64,
     usd_value_total: i32,
     nok_value_total: i32,
     location: String,
@@ -68,6 +72,7 @@ struct PortfolioCoin {
 struct Coin {
     name: String,
     btc_value: f64,
+    eth_value: f64,
     //btc_24h_change: f64,
     usd_value: f64,
     //usd_24h_change: f64,
@@ -134,7 +139,7 @@ fn get_simple_price_coin() -> Result<Vec<Coin>, Box<dyn Error>> {
     let api_endpoint_simple_price: &str = "/simple/price?ids=";
     let api_endpoint_ending: &str =
       //  "&vs_currencies=usd,btc,nok&include_24hr_change=true&include_last_updated_at=true";
-        "&vs_currencies=usd,btc,nok&include_last_updated_at=true";
+        "&vs_currencies=usd,btc,eth,nok&include_last_updated_at=true";
 
     let file = File::open("coin.csv")?;
     // todo: allow commenting - # - of coins to be excluded, when reading from file.
@@ -175,9 +180,10 @@ fn get_simple_price_coin() -> Result<Vec<Coin>, Box<dyn Error>> {
     let mut list_of_coins: Vec<Coin> = Vec::new();
     for line in lines.iter() {
         println!(
-            "{};{};{};{};{}",
+            "{};{};{};{};{};{}",
             line,
             price.0[line]["btc"],
+            price.0[line]["eth"],
             //price.0[line]["btc_24h_change"] as i8,
             price.0[line]["usd"],
             //price.0[line]["usd_24h_change"] as i8,
@@ -187,9 +193,10 @@ fn get_simple_price_coin() -> Result<Vec<Coin>, Box<dyn Error>> {
         );
         writeln!(
             savefile_buf,
-            "{};{};{};{};{}",
+            "{};{};{};{};{};{}",
             line,
             price.0[line]["btc"],
+            price.0[line]["eth"],
            // price.0[line]["btc_24h_change"],
             price.0[line]["usd"],
            // price.0[line]["usd_24h_change"],
@@ -199,9 +206,10 @@ fn get_simple_price_coin() -> Result<Vec<Coin>, Box<dyn Error>> {
         )?;
         writeln!(
             savefile_cur_buf,
-            "{};{};{};{};{}",
+            "{};{};{};{};{};{}",
             line,
             price.0[line]["btc"],
+            price.0[line]["eth"],
            // price.0[line]["btc_24h_change"],
             price.0[line]["usd"],
            // price.0[line]["usd_24h_change"],
@@ -213,6 +221,7 @@ fn get_simple_price_coin() -> Result<Vec<Coin>, Box<dyn Error>> {
         let coin = Coin {
             name: line.to_string(),
             btc_value: price.0[line]["btc"],
+            eth_value: price.0[line]["eth"],
            // btc_24h_change: price.0[line]["btc_24h_change"],
             usd_value: price.0[line]["usd"],
            // usd_24h_change: price.0[line]["usd_24h_change"],
